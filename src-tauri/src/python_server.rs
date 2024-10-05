@@ -13,11 +13,7 @@ fn install_python_packages(
     python_executable: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("Installing required Python packages...");
-    let pip_executable = if cfg!(target_os = "windows") {
-        python_executable.with_file_name("pip.exe")
-    } else {
-        python_executable.with_file_name("pip3")
-    };
+
     let requirements_path = app_handle
         .path()
         .resolve("python_server/requirements.txt", BaseDirectory::Resource)
@@ -50,7 +46,7 @@ fn install_python_packages(
 fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
     if cfg!(target_os = "windows") {
         // Windows-specific search
-        let python_exe = base_dir.join("python.exe");
+        let python_exe = base_dir.join("python").join("python.exe");
         if python_exe.exists() {
             return Some(python_exe);
         }
@@ -115,12 +111,6 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
 
     install_python_packages(&app_handle, &python_executable)
         .map_err(|e| format!("Failed to install Python packages: {}", e))?;
-
-    // Read the FastAPI server script from file
-    // let script_path_to_api = app_handle
-    //     .path()
-    //     .resolve("python_server/api.py", BaseDirectory::Resource)
-    //     .unwrap();
 
     // Write the Python script to a file in the Python directory
     let script_path = python_dir.join("api.py");
