@@ -4,19 +4,27 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use tar::Archive;
+use tauri::path::BaseDirectory;
+use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 
-fn install_python_packages(python_executable: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn install_python_packages(
+    app_handle: &tauri::AppHandle,
+    python_executable: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("Installing required Python packages...");
     let pip_executable = if cfg!(target_os = "windows") {
         python_executable.with_file_name("pip.exe")
     } else {
         python_executable.with_file_name("pip3")
     };
-    let requirements_path = Path::new("../python_server/requirements.txt");
+    let requirements_path = app_handle
+        .path()
+        .resolve("python_server/requirements.txt", BaseDirectory::Resource)
+        .expect("failed to resolve resource");
 
     if !requirements_path.exists() {
-        return Err("requirements.txt not found".into());
+        return Err("requirements.txt not found in bundled resources".into());
     }
 
     let output = Command::new(&pip_executable)
@@ -75,43 +83,36 @@ fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::err
 }
 
 pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
-    let python_dir = Path::new("../python");
+    let python_dir = app_handle
+        .path()
+        .resolve("python_server", BaseDirectory::Resource)
+        .unwrap();
 
-    if !Path::new("../python_server/requirements.txt").exists() {
-        return Err(
-            "requirements.txt file not found. Please ensure it exists in the current directory."
-                .to_string(),
-        );
-    }
-
-    fs::create_dir_all(python_dir)
-        .map_err(|e| format!("Failed to create Python directory: {}", e))?;
-
-    let python_executable = match find_python_executable(python_dir) {
+    let python_executable = match find_python_executable(&python_dir) {
         Some(exe) => {
             println!("Python installation found at {:?}", exe);
             exe
         }
         None => {
             println!("Python not found. Installing...");
-            download_and_extract_python(python_dir)
+            download_and_extract_python(&python_dir)
                 .map_err(|e| format!("Failed to download and extract Python: {}", e))?;
-            find_python_executable(python_dir)
+            find_python_executable(&python_dir)
                 .ok_or_else(|| "Failed to find Python executable after installation. Please check your installation and try again.".to_string())?
         }
     };
 
-    install_python_packages(&python_executable)
+    install_python_packages(&app_handle, &python_executable)
         .map_err(|e| format!("Failed to install Python packages: {}", e))?;
 
     // Read the FastAPI server script from file
-    let python_script = fs::read_to_string("../python_server/api.py")
-        .map_err(|e| format!("Failed to read FastAPI server script: {}", e))?;
+    let script_path_to_api = app_handle
+        .path()
+        .resolve("python_server/api.py", BaseDirectory::Resource)
+        .unwrap();
 
     // Write the Python script to a file in the Python directory
-    let script_path = python_dir.join("fastapi_server.py");
-    fs::write(&script_path, python_script)
-        .map_err(|e| format!("Failed to write FastAPI server script: {}", e))?;
+    let script_path = python_dir.join("api.py");
 
     // Run the Python script
     println!("Running Python script...");
