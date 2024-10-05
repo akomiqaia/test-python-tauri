@@ -61,9 +61,9 @@ fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
 
 fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let (python_url, is_zip) = if cfg!(target_os = "windows") {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-i686-pc-windows-msvc-static-install_only.tar.gz", true)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-x86_64-pc-windows-msvc-install_only.tar.gz", false)
     } else {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.11.6+20231002-aarch64-apple-darwin-install_only.tar.gz", false)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-x86_64-apple-darwin-install_only.tar.gz", false)
     };
 
     println!("Downloading Python distribution...");
