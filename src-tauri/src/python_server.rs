@@ -61,9 +61,9 @@ fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
 
 fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let (python_url, is_zip) = if cfg!(target_os = "windows") {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20230507/cpython-3.11.3+20230507-x86_64-pc-windows-msvc-shared-install_only.zip", true)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.10.13+20231002-i686-pc-windows-msvc-static-install_only.tar.gz", true)
     } else {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20230507/cpython-3.11.3+20230507-x86_64-apple-darwin-install_only.tar.gz", false)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20231002/cpython-3.11.6+20231002-aarch64-apple-darwin-install_only.tar.gz", false)
     };
 
     println!("Downloading Python distribution...");
@@ -106,10 +106,10 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
         .map_err(|e| format!("Failed to install Python packages: {}", e))?;
 
     // Read the FastAPI server script from file
-    let script_path_to_api = app_handle
-        .path()
-        .resolve("python_server/api.py", BaseDirectory::Resource)
-        .unwrap();
+    // let script_path_to_api = app_handle
+    //     .path()
+    //     .resolve("python_server/api.py", BaseDirectory::Resource)
+    //     .unwrap();
 
     // Write the Python script to a file in the Python directory
     let script_path = python_dir.join("api.py");
