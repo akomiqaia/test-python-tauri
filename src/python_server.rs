@@ -1,10 +1,18 @@
 fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
     if cfg!(target_os = "windows") {
         // Windows-specific search
-        let python_exe = base_dir.join("python.exe");
-        if python_exe.exists() {
-            return Some(python_exe);
-        }
+        let mut possible_paths = vec![
+            python_executable.with_file_name("pip.exe"),
+            python_executable
+                .parent()
+                .unwrap()
+                .join("Scripts")
+                .join("pip.exe"),
+        ];
+        possible_paths
+            .into_iter()
+            .find(|path| path.exists())
+            .ok_or_else(|| "pip.exe not found".to_string())?
     } else {
         // macOS-specific search
         for entry in fs::read_dir(base_dir).ok()? {

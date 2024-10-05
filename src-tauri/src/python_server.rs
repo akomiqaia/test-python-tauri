@@ -27,10 +27,12 @@ fn install_python_packages(
         return Err("requirements.txt not found in bundled resources".into());
     }
 
-    let output = Command::new(&pip_executable)
+    let output = Command::new(&python_executable)
+        .arg("-m")
+        .arg("pip")
         .arg("install")
         .arg("-r")
-        .arg(requirements_path)
+        .arg(&requirements_path)
         .output()?;
 
     if !output.status.success() {
