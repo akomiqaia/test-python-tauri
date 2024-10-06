@@ -99,6 +99,37 @@ fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::err
     Ok(())
 }
 
+fn install_torch_library(
+    app_handle: &tauri::AppHandle,
+    python_executable: &Path,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Installing PyTorch library...");
+    log::info!("Installing PyTorch library...");
+
+    let output = Command::new(&python_executable)
+        .arg("-m")
+        .arg("pip")
+        .arg("install")
+        .arg("torch")
+        .output()?;
+
+    if !output.status.success() {
+        log::error!(
+            "Failed to install packages: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return Err(format!(
+            "Failed to install packages: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )
+        .into());
+    }
+
+    println!("PyTorch library installed successfully");
+    log::info!("PyTorch library installed successfully");
+    Ok(())
+}
+
 pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
     let python_dir = app_handle
         .path()
@@ -120,7 +151,8 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
                 .ok_or_else(|| "Failed to find Python executable after installation. Please check your installation and try again.".to_string())?
         }
     };
-
+    install_torch_library(&app_handle, &python_executable)
+        .map_err(|e| format!("Failed to install PyTorch library: {}", e))?;
     install_python_packages(&app_handle, &python_executable)
         .map_err(|e| format!("Failed to install Python packages: {}", e))?;
 
