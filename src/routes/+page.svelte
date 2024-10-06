@@ -1,8 +1,6 @@
 <script lang="ts">
     import { invoke } from "@tauri-apps/api/core";
     import { listen } from "@tauri-apps/api/event";
-    import { open } from "@tauri-apps/plugin-dialog";
-    import { readTextFile } from "@tauri-apps/plugin-fs";
 
     let fileContent = "";
     let fileName = "Untitled";
@@ -81,6 +79,13 @@
         console.log(data);
         requestResult = data.Hello;
     }
+    let sentences = [];
+    async function getModelSimilarities() {
+        const response = await fetch("http://localhost:8000/sim");
+        const data = await response.json();
+
+        sentences = data.item_id;
+    }
 </script>
 
 <div class="editor">
@@ -96,6 +101,7 @@
                 <button on:click={getSimpleRequest}>
                     simple request {requestResult}</button
                 >
+                <button on:click={getModelSimilarities}>getSimilarities</button>
                 {#if isInstallingPython}
                     <div class="progress-bar">
                         <div
@@ -121,6 +127,9 @@
     <div class="main-content">
         <div class="tabs">
             <div class="tab active">{fileName}</div>
+        </div>
+        <div>
+            {sentences[0]?.similarity}
         </div>
         <textarea
             value={fileContent}

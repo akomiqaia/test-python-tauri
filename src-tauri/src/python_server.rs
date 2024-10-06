@@ -1,4 +1,5 @@
 use flate2::read::GzDecoder;
+use log;
 use reqwest::blocking::get;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -13,13 +14,15 @@ fn install_python_packages(
     python_executable: &Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!("Installing required Python packages...");
+    log::info!("Installing required Python packages...");
 
     let requirements_path = app_handle
         .path()
         .resolve("python_server/requirements.txt", BaseDirectory::Resource)
         .expect("failed to resolve resource");
-
+    log::info!("requirements_path: {:?}", requirements_path);
     if !requirements_path.exists() {
+        log::error!("requirements.txt not found in bundled resources");
         return Err("requirements.txt not found in bundled resources".into());
     }
 
@@ -32,6 +35,10 @@ fn install_python_packages(
         .output()?;
 
     if !output.status.success() {
+        log::error!(
+            "Failed to install packages: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
         return Err(format!(
             "Failed to install packages: {}",
             String::from_utf8_lossy(&output.stderr)
@@ -40,6 +47,7 @@ fn install_python_packages(
     }
 
     println!("Packages installed successfully");
+    log::info!("Packages installed successfully");
     Ok(())
 }
 
@@ -68,15 +76,17 @@ fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
 
 fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let (python_url, is_zip) = if cfg!(target_os = "windows") {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-x86_64-pc-windows-msvc-install_only.tar.gz", false)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.12.7+20241002-x86_64-pc-windows-msvc-install_only.tar.gz", false)
     } else {
-        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-x86_64-apple-darwin-install_only.tar.gz", false)
+        ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.12.7+20241002-aarch64-apple-darwin-install_only.tar.gz", false)
     };
 
     println!("Downloading Python distribution...");
+    log::info!("Downloading Python distribution...");
     let response = get(python_url)?;
 
     println!("Extracting Python distribution...");
+    log::info!("Extracting Python distribution...");
     if is_zip {
         let mut zip_archive = zip::ZipArchive::new(std::io::Cursor::new(response.bytes()?))?;
         zip_archive.extract(python_dir)?;
@@ -97,10 +107,12 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
 
     let python_executable = match find_python_executable(&python_dir) {
         Some(exe) => {
+            log::info!("Python installation found at {:?}", exe);
             println!("Python installation found at {:?}", exe);
             exe
         }
         None => {
+            log::info!("Python not found. Installing...");
             println!("Python not found. Installing...");
             download_and_extract_python(&python_dir)
                 .map_err(|e| format!("Failed to download and extract Python: {}", e))?;
@@ -116,6 +128,7 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
     let script_path = python_dir.join("api.py");
 
     // Run the Python script
+    log::info!("Running Python script...");
     println!("Running Python script...");
 
     tauri::async_runtime::spawn(async move {
@@ -127,13 +140,20 @@ pub fn start_python_server(app_handle: tauri::AppHandle) -> Result<(), String> {
             .await
             .unwrap();
         if output.status.success() {
+            log::info!("Python server started successfully");
+            log::info!("Result: {:?}", String::from_utf8_lossy(&output.stdout));
             println!("Python server started successfully");
             println!("Result: {:?}", String::from_utf8_lossy(&output.stdout));
         } else {
+            log::error!(
+                "Failed to start Python server. Exit code: {:?}",
+                output.status.code()
+            );
             eprintln!(
                 "Failed to start Python server. Exit code: {:?}",
                 output.status.code()
             );
+            log::error!("Error output: {}", String::from_utf8_lossy(&output.stderr));
             eprintln!("Error output: {}", String::from_utf8_lossy(&output.stderr));
         }
     });

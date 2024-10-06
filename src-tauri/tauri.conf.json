@@ -22,7 +22,9 @@
     }
   },
   "bundle": {
-    "resources": ["../python_server/*"],
+    "resources": {
+      "../python_server/*": "python_server/"
+    },
     "active": true,
     "targets": "all",
     "icon": [
