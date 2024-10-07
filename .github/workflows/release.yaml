@@ -16,8 +16,6 @@ jobs:
         include:
           - platform: "windows-latest"
             args: ""
-          - platform: "widnows-latest"
-            args: "--target aarch64-pc-windows-msvc --bundles nsis"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -59,4 +57,4 @@ jobs:
           releaseDraft: true
           prerelease: false
           includeDebug: true
-          args: ${{ matrix.args }}
+          args: --target aarch64-pc-windows-msvc --bundles nsis
