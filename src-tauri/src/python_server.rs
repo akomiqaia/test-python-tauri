@@ -76,23 +76,6 @@ fn find_python_executable(base_dir: &Path) -> Option<PathBuf> {
 
 fn download_and_extract_python(python_dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let (python_url, is_zip) = if cfg!(target_os = "windows") {
-        let visual_c_response = get("https://aka.ms/vs/17/release/vc_redist.x64.exe")?;
-        // Download Visual C++ Redistributable and install it
-        let visual_c_exe_path = python_dir.join("vc_redist.x64.exe");
-        fs::write(&visual_c_exe_path, visual_c_response.bytes()?)?;
-
-        let output = Command::new(&visual_c_exe_path).output()?;
-        if !output.status.success() {
-            log::error!(
-                "Failed to install Visual C++ Redistributable: {}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-            return Err(format!(
-                "Failed to install Visual C++ Redistributable: {}",
-                String::from_utf8_lossy(&output.stderr)
-            )
-            .into());
-        }
         ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-x86_64-pc-windows-msvc-install_only.tar.gz", false)
     } else {
         ("https://github.com/indygreg/python-build-standalone/releases/download/20241002/cpython-3.11.10+20241002-aarch64-apple-darwin-install_only.tar.gz", false)
