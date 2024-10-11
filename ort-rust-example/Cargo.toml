@@ -1,0 +1,11 @@
+[package]
+name = "ort-rust-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+ndarray = "0.16.1"
+ort = "=2.0.0-rc.6"
+tokenizers = "0.20.1"
+tracing-subscriber = "0.3.18"
