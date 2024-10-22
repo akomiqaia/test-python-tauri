@@ -1,0 +1,9 @@
+[package]
+name = "pdf-extractor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+image = "0.25.4"
+pdf-extract = "0.7.10"
+rusty-tesseract = "1.1.10"
