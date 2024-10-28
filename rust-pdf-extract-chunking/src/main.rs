@@ -1,8 +1,9 @@
 fn main() {
-  let bytes = std::fs::read("docs/pdf2.0.pdf").unwrap();
-  let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
+    let pdf = std::fs::read("docs/pdf2.0.pdf");
+    let bytes = pdf.unwrap();
+    println!("{:?}", bytes);
+    let out = pdf_extract::extract_text_from_mem(&bytes).unwrap();
 
-  // write output to txt file
-  std::fs::write("output.txt", out.as_bytes()).unwrap();
-  println!("{}", out);
+    // write output to txt file
+    let _ = std::fs::write("output.txt", &out);
 }

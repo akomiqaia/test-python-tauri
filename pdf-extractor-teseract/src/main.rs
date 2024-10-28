@@ -62,7 +62,7 @@ fn main() {
         "The first boxfile symbol is: {}",
         box_output.boxes[0].symbol
     );
-    println!("The full boxfile output is:\n{}", box_output.output);
+    // println!("The full boxfile output is:\n{}", box_output.output);
 
     // image_to_data creates a DataOutput containing the parsed output from Tesseract when using the "TSV" Parameter
     let data_output = rusty_tesseract::image_to_data(&img, &my_args).unwrap();
@@ -71,5 +71,7 @@ fn main() {
         "The first text is '{}' with confidence {}",
         first_text_line.text, first_text_line.conf
     );
-    println!("The full data output is:\n{}", data_output.output);
+    // println!("The full data output is:\n{}", data_output.output);
+    // write to txt file
+    std::fs::write("output.txt", output.as_bytes()).unwrap();
 }

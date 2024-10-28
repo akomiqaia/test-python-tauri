@@ -1,0 +1,99 @@
+PDFFigures 2.0: Mining Figures from Research Papers
+Christopher Clark Santosh Divvala
+Allen Institute for Artificial Intelligence
+University of Washington
+{chrisc, santoshd}@allenai.org
+http://pdffigures2.allenai.org
+ABSTRACT
+Figures and tables are key sources of information in many
+scholarly documents. However, current academic search en-
+gines do not make use of figures and tables when semanti-
+cally parsing documents or presenting document summaries
+to users. To facilitate these applications we develop an algo-
+rithm that extracts figures, tables, and captions from docu-
+ments called “PDFFigures 2.0.” Our proposed approach ana-
+lyzes the structure of individual pages by detecting captions,
+graphical elements, and chunks of body text, and then lo-
+cates figures and tables by reasoning about the empty re-
+gions within that text. To evaluate our work, we intro-
+duce a new dataset of computer science papers, along with
+ground truth labels for the locations of the figures, tables,
+and captions within them. Our algorithm achieves impres-
+sive results (94% precision at 90% recall) on this dataset
+surpassing previous state of the art. Further, we show how
+our framework was used to extract figures from a corpus of
+over one million papers, and how the resulting extractions
+were integrated into the user interface of a smart academic
+search engine, Semantic Scholar (www.semanticscholar.org).
+Finally, we present results of exploratory data analysis com-
+pleted on the extracted figures as well as an extension of our
+method for the task of section title extraction. We release
+our dataset and code on our project webpage for enabling
+future research (http://pdffigures2.allenai.org).
+Keywords
+Scalable figure extraction; academic search engine; section
+title extraction; figure usage analysis
+1. INTRODUCTION
+Traditional tools for organizing and presenting digital li-
+braries only make use of the text of the documents they in-
+dex. Focusing exclusively on text, however, comes at a price
+because in many domains much of the important content is
+contained within figures and tables. Especially in scholarly
+Permission to make digital or hard copies of all or part of this work for personal or
+classroom use is granted without fee provided that copies are not made or distributed
+for profit or commercial advantage and that copies bear this notice and the full cita-
+tion on the first page. Copyrights for components of this work owned by others than
+ACM must be honored. Abstracting with credit is permitted. To copy otherwise, or re-
+publish, to post on servers or to redistribute to lists, requires prior specific permission
+and/or a fee. Request permissions from permissions@acm.org.
+JCDL ’16, June 19-23, 2016, Newark, NJ, USA
+c© 2016 ACM. ISBN 978-1-4503-4229-2/16/06. . . $15.00
+DOI: http://dx.doi.org/10.1145/2910896.2910904
+domains, authors frequently use figures and tables to com-
+pare their work to previous work, to convey the quantitative
+results of their experiments, or to provide graphics that help
+readers understand their methods. Therefore parsing figures
+and tables is a necessary component of any system that seeks
+to gain a semantic understanding of such documents.
+Tables and figures also have the potential to be used as
+powerful document summarization tools. It is common to
+get the gist of a paper by glancing through the figures1,
+which often contain both the main results as well as visual
+aids that outline the work being discussed. Being able to
+extract these figures and present them to a user would be
+an effective way to let users quickly get an overview of the
+paper’s content. To this end, we introduce PDFFigures 2.0.
+PDFFigures 2.0 takes as input computer science papers in
+PDF format and outputs the figures, tables, and captions
+contained within them.
+Our work builds upon the PDFFigures algorithm [5]. The
+approach used by [5] has high accuracy but was only tested
+on papers from a narrow range of sources. In this work,
+we improve upon that method to build a figure extractor
+that is suitable for use as part of academic search engines
+for computer science papers. To meet this goal we improve
+upon the accuracy of PDFFigures [5] and, more importantly,
+build an extractor that is effective across the entire range of
+content in a digital library. This requires an approach that
+is robust to the large number of possible formats and styles
+papers might use. Particular challenges include handling
+documents with widely differing spacing conventions, avoid-
+ing false positives while maintaining the ability to extract
+a broad range of possible captions, and extracting a highly
+varied selection of figures and tables.
+Our approach follows the same general structure used
+in [5] (see Section 3) and employs data-driven heuristics
+that leverage formatting conventions used consistently in
+the computer science domain. Following a heuristic ap-
+proach makes our method transparent and easy to mod-
+ify [13], which we have found to be important for developing
+an effective solution to this task.
+While our focus is on extracting figures, our method also
+produces a rich decomposition of the document and anal-
+ysis of the text. In this paper we demonstrate how this
+analysis can be leveraged for other extraction tasks, such as
+identifying section titles. Section titles are important be-
+cause they reveal the overall structure of the document, and
+can be a crucial feature for upstream components analyzing
+1Throughout this paper we use the term “figures” to refer to
+both tables and figures along with their associated captions
